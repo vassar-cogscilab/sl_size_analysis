@@ -1,0 +1,9 @@
+{
+    "path" : "~/sl_size",
+    "sortOrder" : [
+        {
+            "ascending" : true,
+            "columnIndex" : 2
+        }
+    ]
+}
