@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "library(dplyr)\nlibrary(sciplot)\nlibrary(ggplot2)\n\n# loading raw data ####\nall_data=read.csv2('sl_size_data.csv')\n\n# data cleaning and annotating ####\nall_data$value <- NULL\n\nsubject_set_size_condition = all_data %>% filter(sequence_type == 'predictable') %>%\n  group_by(subject_id, grid) %>% summarize()\n\nsubject_set_size_condition$set_size <- as.numeric(factor(as.character(subject_set_size_condition$grid)))*2 + 2\n\nall_data$set_size <- sapply(all_data$subject_id, function(x){\n  return(subset(subject_set_size_condition, subject_id == x)$set_size)\n})\n\nall_data$subject_id <- as.numeric(all_data$subject_id)\n\n# count the number of subjects ####\nn.subjects <- length(unique(all_data$subject_id))\n\n# get test data ####\ntest_data=subset(all_data, sequence_type=='unpredictable'|sequence_type=='predictable')\ntest_data$responses <- NULL\ntest_data$session_id <- NULL\ntest_data$survey_part <- NULL\ntest_data$button_pressed <- NULL\n\n# quick plot of group-level RTs by sequence type ####\nmean(test_data$rt)\nsd(test_data$rt)\nhist(test_data$rt,breaks=1000,xlim=c(0,3000))\n\nsummary_data=test_data%>%group_by(subject_id, sequence_type, block)%>%filter(correct==1 & rt<2500)%>%summarize(mean.rt=mean(rt))\nlineplot.CI(block, mean.rt, sequence_type, data=summary_data)\n\n# look at effect of set size ####\nsummary.set.size <- test_data %>% group_by(subject_id, sequence_type, block, set_size) %>%\n  filter(correct==1 & rt < 2500) %>% summarize(mean.rt = mean(rt))\n\nggplot(summary.set.size, aes(x=block, y=mean.rt, color=sequence_type)) +\n  stat_summary(fun.y=mean, fun.ymax=function(x){return(mean(x)+se(x))}, fun.ymin = function(x){return(mean(x)-se(x))})+\n  facet_wrap(~set_size)\n\n# t-tests by set_size ####\n\nsummary.set.size.no.block <- test_data %>% group_by(subject_id, sequence_type,set_size) %>%\n  filter(correct==1 & rt < 2500) %>% summarize(mean.rt = mean(rt))\n\nbargraph.CI(set_size, mean.rt, sequence_type, data=summary.set.size.no.block)\n\nt.test(mean.rt ~ sequence_type, data=subset(summary.set.size.no.block, set_size==4), paired=T)\nt.test(mean.rt ~ sequence_type, data=subset(summary.set.size.no.block, set_size==6), paired=T)\nt.test(mean.rt ~ sequence_type, data=subset(summary.set.size.no.block, set_size==8), paired=T)\n\n# individual subject ####\n\nsummary.pairs.subject <- test_data %>% filter(block==0) %>% \n  group_by(subject_id, set_size) %>% filter(row_number() <= 16) %>% select(subject_id, set_size, target)\n\nsummary.pairs.subject$pair <- rep(c(1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8), n.subjects)\n\nsummary.pairs.subject <- summary.pairs.subject %>% group_by(subject_id, target, set_size) %>% filter(row_number() <= 1)\n\ntest_data$pair <- mapply(function(sid, targ){\n  return(subset(summary.pairs.subject, subject_id == sid & target == targ)$pair)\n}, test_data$subject_id, test_data$target)\n\ntest_data <- test_data %>% group_by(subject_id, target) %>% mutate(total.obs = row_number())\n\ntest_data <- test_data %>% filter(rt < 2500, correct == 1)\n\n# subjects with piecewise learning:\n# 14, 19, 20\n\nwhich_subject_id <- 14\nggplot(subset(test_data, subject_id == which_subject_id), aes(x=total.obs, y=rt, color=sequence_type))+\n  geom_point()+\n  facet_wrap(~pair)+\n  theme_bw()\n",
+    "created" : 1491935512141.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "223478021",
+    "id" : "5B81D4DA",
+    "lastKnownWriteTime" : 1493302522,
+    "last_content_update" : 1493302522324,
+    "path" : "~/Documents/sl_size_analysis/sl_size/analysis.R",
+    "project_path" : "analysis.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -24,6 +24,10 @@ n.subjects <- length(unique(all_data$subject_id))
 
 # get test data ####
 test_data=subset(all_data, sequence_type=='unpredictable'|sequence_type=='predictable')
+test_data$responses <- NULL
+test_data$session_id <- NULL
+test_data$survey_part <- NULL
+test_data$button_pressed <- NULL
 
 # quick plot of group-level RTs by sequence type ####
 mean(test_data$rt)
@@ -61,4 +65,19 @@ summary.pairs.subject$pair <- rep(c(1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8), n.subjects
 
 summary.pairs.subject <- summary.pairs.subject %>% group_by(subject_id, target, set_size) %>% filter(row_number() <= 1)
 
+test_data$pair <- mapply(function(sid, targ){
+  return(subset(summary.pairs.subject, subject_id == sid & target == targ)$pair)
+}, test_data$subject_id, test_data$target)
 
+test_data <- test_data %>% group_by(subject_id, target) %>% mutate(total.obs = row_number())
+
+test_data <- test_data %>% filter(rt < 2500, correct == 1)
+
+# subjects with piecewise learning:
+# 14, 19, 20
+
+which_subject_id <- 14
+ggplot(subset(test_data, subject_id == which_subject_id), aes(x=total.obs, y=rt, color=sequence_type))+
+  geom_point()+
+  facet_wrap(~pair)+
+  theme_bw()
