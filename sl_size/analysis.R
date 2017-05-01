@@ -73,10 +73,10 @@ test_data <- test_data %>% group_by(subject_id, target) %>% mutate(total.obs = r
 
 test_data <- test_data %>% filter(rt < 2500, correct == 1)
 
-# subjects with piecewise learning:
-# 14, 19, 20
+# subjects with piecewise learning: ####
+# 14, 19, 20, 26
 
-which_subject_id <- 14
+which_subject_id <- 27
 ggplot(subset(test_data, subject_id == which_subject_id), aes(x=total.obs, y=rt, color=sequence_type))+
   geom_point()+
   facet_wrap(~pair)+
